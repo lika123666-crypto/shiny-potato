@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T4FX – XAUUSD Gold Analysis</title>
+<style>
+:root{--bg:#0b0e14;--card:#141a24;--gold:#f5b921;--green:#22c55e;--red:#ef4444;--text:#e5e7eb;--muted:#9ca3af;--border:#253041}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#0f141d;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.brand{font-size:28px;font-weight:800;color:var(--gold)}
+.brand span{color:#fff}
+nav{display:flex;flex-wrap:wrap;gap:4px}
+nav button{background:none;border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;cursor:pointer}
+nav button.active,nav button:hover{border-color:var(--gold);color:var(--gold)}
+main{padding:20px;max-width:1280px;margin:auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px}
+.banner{border-radius:14px;padding:22px;margin-bottom:18px;background:linear-gradient(135deg,#1f2937,#3b2f0a);border:2px solid var(--gold)}
+.banner h2{margin:0 0 8px;color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:12px 0}
+.stat{background:#0f141d;border-radius:10px;padding:12px;text-align:center}
+.stat small{color:var(--muted);display:block;margin-bottom:4px}
+.stat b{font-size:18px}
+.buy{color:var(--green)}
+.sell{color:var(--red)}
+.tab{display:none}
+.tab.show{display:block}
+input,select,textarea{background:#0f141d;border:1px solid var(--border);color:var(--text);padding:8px;border-radius:8px;margin:4px}
+button.action{background:var(--gold);color:#111;border:none;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer;margin:4px}
+button.small{background:#374151;color:#fff;border:none;padding:4px 8px;border-radius:6px;cursor:pointer}
+img.shot{max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+.disc{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5}
+#toasts{position:fixed;right:16px;bottom:16px;z-index:99;max-width:380px}
+.toast{background:#1f2937;border-left:5px solid var(--gold);padding:12px 16px;margin-top:8px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+.flash{animation:flash 1s 6}
+@keyframes flash{50%{border-color:#fff}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">T4<span>FX</span> <small style="font-size:12px;color:var(--muted)">XAUUSD Gold Analysis</small></div>
+  <nav>
+    <button data-tab="home" class="active" onclick="showTab('home')">Home</button>
+    <button data-tab="signals" onclick="showTab('signals')">Signals</button>
+    <button data-tab="scalping" onclick="showTab('scalping')">Scalping</button>
+    <button data-tab="swing" onclick="showTab('swing')">Swing Trade</button>
+    <button data-tab="day" onclick="showTab('day')">Day Trade</button>
+    <button data-tab="analysis" onclick="showTab('analysis')">Market Analysis</button>
+    <button data-tab="news" onclick="showTab('news')">News &amp; DXY</button>
+    <button data-tab="mt5" onclick="showTab('mt5')">MT5 Screenshot</button>
+    <button data-tab="auto" onclick="showTab('auto')">Auto Analyst</button>
+  </nav>
+  <div id="clock" style="font-size:13px;color:var(--muted)"></div>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section id="home" class="tab show">
+    <div class="banner" id="bigBanner"></div>
+    <div class="card">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+        <label>Your XAUUSD price now:
+          <input id="priceInput" type="number" step="0.01" style="width:160px">
+        </label>
+        <button class="action" onclick="updatePrice()">Update &amp; check alerts</button>
+        <button class="action" onclick="enableAlerts()">Enable sound &amp; notifications</button>
+      </div>
+      <div class="grid">
+        <div class="stat"><small>Session (UTC)</small><b id="statSession">-</b></div>
+        <div class="stat"><small>DXY Bias</small><b id="statDxy">NEUTRAL</b></div>
+        <div class="stat"><small>Featured Move</small><b id="statMove">-</b></div>
+        <div class="stat"><small>Next USA News</small><b id="statNews">-</b></div>
+      </div>
+      <p class="disc">Alerts: 1 minute before each USA news event, and at each +150 pip milestone (max 3). Enter your price manually to track the featured trade.</p>
+    </div>
+    <div class="card"><div id="tv_home" style="height:480px"></div></div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section id="signals" class="tab">
+    <div id="sig_featured"></div>
+    <div class="card"><div id="tv_signals" style="height:480px"></div></div>
+  </section>
+
+  <!-- SCALPING -->
+  <section id="scalping" class="tab">
+    <div id="trade_scalping"></div>
+    <div class="card"><div id="tv_scalping" style="height:480px"></div></div>
+  </section>
+
+  <!-- SWING -->
+  <section id="swing" class="tab">
+    <div id="trade_swing"></div>
+    <div class="card"><div id="tv_swing" style="height:480px"></div></div>
+  </section>
+
+  <!-- DAY -->
+  <section id="day" class="tab">
+    <div id="trade_day"></div>
+    <div class="card"><div id="tv_day" style="height:480px"></div></div>
+  </section>
+
+  <!-- MARKET ANALYSIS -->
+  <section id="analysis" class="tab">
+    <div class="card">
+      <h2>Gold (XAUUSD) Market Analysis</h2>
+      <p id="marketNotes"></p>
+    </div>
+    <div class="card"><div id="tv_dxy" style="height:480px"></div></div>
+  </section>
+
+  <!-- NEWS & DXY -->
+  <section id="news" class="tab">
+    <div class="card">
+      <h2>USA News Calendar</h2>
+      <p class="disc">Add each USA event in your local time. Choose whether you expect the result to be GOOD or BAD for the US dollar. The alert fires 1 minute before the release.</p>
+      <input id="newsName" placeholder="Event name (e.g. US CPI)">
+      <input id="newsTime" type="datetime-local">
+      <select id="newsExpect">
+        <option value="GOOD">Good for USD (DXY bullish → SELL gold)</option>
+        <option value="BAD">Bad for USD (DXY bearish → BUY gold)</option>
+      </select>
+      <button class="action" onclick="addNews()">Add event</button>
+      <table style="margin-top:14px">
+        <thead><tr><th>Event</th><th>Time</th><th>Expectation</th><th>Action</th><th>Status</th><th></th></tr></thead>
+        <tbody id="newsList"></tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>DXY Bias (manual)</h2>
+      <p class="disc">Set the DXY bias from your own chart. Auto Analyst uses this value.</p>
+      <select id="dxySelect" onchange="setDxy(this.value)">
+        <option value="NEUTRAL">NEUTRAL</option>
+        <option value="BULLISH">BULLISH → Gold SELL bias</option>
+        <option value="BEARISH">BEARISH → Gold BUY bias</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- MT5 SCREENSHOT -->
+  <section id="mt5" class="tab">
+    <div class="card">
+      <h2>MT5 Chart Screenshot</h2>
+      <p class="disc">Upload a screenshot of your MT5 gold chart, add a note, and press Ask Signal. This page stores your request for review. It does not analyze the image automatically.</p>
+      <input type="file" id="shotInput" accept="image/*">
+      <img id="shotPreview" class="shot" style="display:none">
+      <textarea id="shotNote" rows="3" style="width:100%" placeholder="Your note (timeframe, what you see, question)"></textarea>
+      <button class="action" onclick="askSignal()">Ask Signal</button>
+      <div id="requests"></div>
+    </div>
+  </section>
+
+  <!-- AUTO ANALYST -->
+  <section id="auto" class="tab">
+    <div class="card">
+      <h2>Auto Analyst – XAUUSD Only</h2>
+      <p class="disc">Active only during the London session (07:00–16:00 UTC) and the New York session (12:00–21:00 UTC). It sends one sound alert per direction per hour based on the DXY bias.</p>
+      <label><input type="checkbox" id="autoToggle" onchange="autoAnalyst()"> Turn on Auto Analyst</label>
+      <p id="autoStatus"></p>
+      <p id="autoSuggestion"></p>
+    </div>
+  </section>
+
+</main>
+
+<div id="toasts"></div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+/* ================= CONFIG (edit here) ================= */
+const CONFIG = {
+  pipSize: 0.10,          // 1 pip = 0.10 USD on XAUUSD (check your broker)
+  alertStepPips: 150,     // alert every 150 pips in favour
+  maxStepAlerts: 3,       // send at most 3 milestone alerts
+  preNewsSeconds: 60,     // alert 1 minute before news
+  sessions: [
+    {name:'London',   startUTC:7,  endUTC:16},
+    {name:'New York', startUTC:12, endUTC:21}
+  ]
+};
+
+/* EXAMPLE DATA – replace with your own analysis */
+const FEATURED = {type:'BUY', entry:4000.00, sl:3990.00, tp1:4015.00, tp2:4030.00, tp3:4045.00,
+  note:'EXAMPLE setup. Replace with your own featured analysis before using.'};
+
+const TRADES = {
+  scalping:{title:'Scalping – XAUUSD (M5/M15)', type:'SELL', entry:4000.00, sl:4006.00, tp1:3995.00, tp2:3990.00, tp3:3985.00,
+    note:'EXAMPLE scalping setup. Replace with your own analysis.', tf:'5'},
+  swing:{title:'Swing Trade – XAUUSD (H4/D1)', type:'BUY', entry:4000.00, sl:3950.00, tp1:4050.00, tp2:4100.00, tp3:4150.00,
+    note:'EXAMPLE swing setup. Replace with your own analysis.', tf:'240'},
+  day:{title:'Day Trade – XAUUSD (H1)', type:'BUY', entry:4000.00, sl:3985.00, tp1:4015.00, tp2:4030.00, tp3:4045.00,
+    note:'EXAMPLE day trade setup. Replace with your own analysis.', tf:'60'}
+};
+
+const MARKET_NOTES = 'Write your daily gold (XAUUSD) analysis here: key levels, trend on H4/D1, USA data calendar, and DXY direction. Gold only.';
+
+/* ================= STATE ================= */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let currentPrice = null;
+let dxyBias = localStorage.getItem('t4fx_dxy') || 'NEUTRAL';
+let news = JSON.parse(localStorage.getItem('t4fx_news') || '[]');
+const firedNews = new Set();
+const firedLevels = new Set();
+let audioCtx = null;
+let pendingShot = null;
+const requests = [];
+const charted = {};
+let lastAutoKey = '';
+
+/* ================= HELPERS ================= */
+function toast(msg){
+  const d = document.createElement('div');
+  d.className = 'toast';
+  d.textContent = msg;
+  $('toasts').appendChild(d);
+  setTimeout(() => d.remove(), 15000);
+}
+
+function beep(times){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    for(let i = 0; i < times; i++){
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.frequency.value = 880;
+      o.connect(g); g.connect(audioCtx.destination);
+      const t = audioCtx.currentTime + i * 0.35;
+      g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o.start(t); o.stop(t + 0.3);
+    }
+  }catch(e){ /* audio blocked until user clicks Enable */ }
+}
+
+function alertUser(title, body){
+  toast(title + ' — ' + body);
+  beep(3);
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification(title, {body});
+  }
+  $('bigBanner').classList.remove('flash'); void $('bigBanner').offsetWidth; $('bigBanner').classList.add('flash');
+}
+
+function enableAlerts(){
+  if('Notification' in window) Notification.requestPermission().then(p => toast('Browser notifications: ' + p));
+  beep(1);
+  toast('Sound alerts enabled. Keep this page open.');
+}
+
+function inSession(){
+  const h = new Date().getUTCHours();
+  return CONFIG.sessions.find(s => h >= s.startUTC && h < s.endUTC) || null;
+}
+
+function fmtCountdown(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  return `${h}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
+}
+
+function newsAction(expected){
+  return expected === 'GOOD'
+    ? {dxy:'BULLISH', action:'SELL', cls:'sell'}
+    : {dxy:'BEARISH', action:'BUY', cls:'buy'};
+}
+
+/* ================= TABS & CHARTS ================= */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('show', t.id === name));
+  document.querySelectorAll('nav button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  const map = {home:['tv_home','OANDA:XAUUSD','15'], signals:['tv_signals','OANDA:XAUUSD','60'],
+    scalping:['tv_scalping','OANDA:XAUUSD','5'], swing:['tv_swing','OANDA:XAUUSD','240'],
+    day:['tv_day','OANDA:XAUUSD','60'], analysis:['tv_dxy','TVC:DXY','240']};
+  if(map[name]) makeChart(...map[name]);
+}
+
+function makeChart(containerId, symbol, interval){
+  if(charted[containerId] || typeof TradingView === 'undefined') return;
+  charted[containerId] = true;
+  new TradingView.widget({
+    autosize:true, symbol, interval, timezone:'Etc/UTC', theme:'dark', style:'1',
+    locale:'en', toolbar_bg:'#0b0e14', enable_publishing:false, allow_symbol_change:false,
+    container_id: containerId
+  });
+}
+
+/* ================= RENDER ================= */
+function tradeCard(t, title){
+  const pips = v => (Math.abs(v - t.entry) / CONFIG.pipSize).toFixed(0);
+  const cls = t.type === 'BUY' ? 'buy' : 'sell';
+  return `<div class="card"><h2>${title}</h2>
+    <div class="grid">
+      <div class="stat"><small>Action</small><b class="${cls}">${t.type} XAUUSD</b></div>
+      <div class="stat"><small>Entry</small><b>${t.entry}</b></div>
+      <div class="stat"><small>Stop Loss</small><b class="sell">${t.sl} (${pips(t.sl)} pips)</b></div>
+      <div class="stat"><small>TP 1</small><b class="buy">${t.tp1} (${pips(t.tp1)} pips)</b></div>
+      <div class="stat"><small>TP 2</small><b class="buy">${t.tp2} (${pips(t.tp2)} pips)</b></div>
+      <div class="stat"><small>TP 3</small><b class="buy">${t.tp3} (${pips(t.tp3)} pips)</b></div>
+    </div>
+    <p>${esc(t.note)}</p></div>`;
+}
+
+function renderBanner(){
+  const f = FEATURED, cls = f.type === 'BUY' ? 'buy' : 'sell';
+  $('bigBanner').innerHTML = `<h2>⭐ T4FX FEATURED SIGNAL</h2>
+    <p><b class="${cls}" style="font-size:22px">${f.type} XAUUSD</b> &nbsp; Entry <b>${f.entry}</b> &nbsp;|&nbsp; SL <b class="sell">${f.sl}</b> &nbsp;|&nbsp; TP1 <b class="buy">${f.tp1}</b> &nbsp;|&nbsp; TP2 <b class="buy">${f.tp2}</b> &nbsp;|&nbsp; TP3 <b class="buy">${f.tp3}</b></p>
+    <p style="color:var(--muted)">${esc(f.note)} Alerts: +150 pips (max 3 times), TP and SL.</p>`;
+  $('sig_featured').innerHTML = tradeCard(f, 'Featured Signal – XAUUSD');
+  $('trade_scalping').innerHTML = tradeCard(TRADES.scalping, TRADES.scalping.title);
+  $('trade_swing').innerHTML = tradeCard(TRADES.swing, TRADES.swing.title);
+  $('trade_day').innerHTML = tradeCard(TRADES.day, TRADES.day.title);
+  $('marketNotes').textContent = MARKET_NOTES;
+}
+
+function renderNews(){
+  const now = Date.now();
+  const rows = news.slice().sort((a,b) => new Date(a.time) - new Date(b.time)).map(n => {
+    const t = new Date(n.time).getTime(), left = t - now, a = newsAction(n.expected);
+    let status;
+    if(left <= 0) status = 'Released';
+    else if(left <= CONFIG.preNewsSeconds * 1000) status = '<b class="sell">PRE-NEWS WINDOW</b>';
+    else status = fmtCountdown(left);
+    return `<tr><td>${esc(n.name)}</td><td>${new Date(t).toLocaleString()}</td>
+      <td>${n.expected === 'GOOD' ? 'Good for USD' : 'Bad for USD'}</td>
+      <td class="${a.cls}">DXY ${a.dxy} → ${a.action} XAUUSD</td><td>${status}</td>
+      <td><button class="small" onclick="deleteNews('${n.id}')">Delete</button></td></tr>`;
+  }).join('');
+  $('newsList').innerHTML = rows || '<tr><td colspan="6">No events yet. Add a USA event above.</td></tr>';
+}
+
+function renderRequests(){
+  $('requests').innerHTML = requests.map(r => `<div class="card" style="margin-top:12px">
+    <small style="color:var(--muted)">${esc(r.time)}</small>
+    <img class="shot" src="${r.url}">
+    <p>${esc(r.note || '(no note)')}</p></div>`).join('');
+}
+
+/* ================= NEWS ================= */
+function addNews(){
+  const name = $('newsName').value.trim(), time = $('newsTime').value;
+  if(!name || !time){ toast('Enter an event name and time.'); return; }
+  news.push({id: String(Date.now() + Math.random()), name, time: new Date(time).toISOString(), expected: $('newsExpect').value});
+  localStorage.setItem('t4fx_news', JSON.stringify(news));
+  $('newsName').value = ''; $('newsTime').value = '';
+  renderNews();
+  toast('USA event added: ' + name);
+}
+
+function deleteNews(id){
+  news = news.filter(n => n.id !== id);
+  localStorage.setItem('t4fx_news', JSON.stringify(news));
+  renderNews();
+}
+
+/* ================= DXY / PRICE / LEVELS ================= */
+function setDxy(v){
+  dxyBias = v;
+  localStorage.setItem('t4fx_dxy', v);
+  $('dxySelect').value = v;
+  $('statDxy').textContent = v;
+  lastAutoKey = '';
+  autoAnalyst();
+}
+
+function updatePrice(){
+  const v = parseFloat($('priceInput').value);
+  if(isNaN(v)){ toast('Enter a valid XAUUSD price.'); return; }
+  currentPrice = v;
+  checkLevels();
+}
+
+function checkLevels(){
+  if(currentPrice == null) return;
+  const f = FEATURED, dir = f.type === 'BUY' ? 1 : -1;
+  const movePips = (currentPrice - f.entry) * dir / CONFIG.pipSize;
+  $('statMove').textContent = movePips.toFixed(0) + ' pips';
+  for(let k = 1; k <= CONFIG.maxStepAlerts; k++){
+    const key = 'step' + k;
+    if(movePips >= k * CONFIG.alertStepPips && !firedLevels.has(key)){
+      firedLevels.add(key);
+      alertUser(`T4FX: +${k * CONFIG.alertStepPips} pips`, `${f.type} XAUUSD is ${movePips.toFixed(0)} pips in favour. Price ${currentPrice}`);
+    }
+  }
+  [['TP1', f.tp1], ['TP2', f.tp2], ['TP3', f.tp3]].forEach(([n, v]) => {
+    if((currentPrice - v) * dir >= 0 && !firedLevels.has(n)){
+      firedLevels.add(n);
+      alertUser(`${n} reached`, `${f.type} XAUUSD target ${v}`);
+    }
+  });
+  if((currentPrice - f.sl) * dir <= 0 && !firedLevels.has('SL')){
+    firedLevels.add('SL');
+    alertUser('Stop Loss hit', `Level ${f.sl}. Follow your risk plan.`);
+  }
+}
+
+/* ================= AUTO ANALYST ================= */
+function autoAnalyst(){
+  const on = $('autoToggle').checked;
+  const s = inSession();
+  if(!on){ $('autoStatus').textContent = 'Auto Analyst is OFF.'; return; }
+  if(!s){
+    $('autoStatus').textContent = 'Paused: outside London and New York sessions.';
+    $('autoSuggestion').textContent = '';
+    return;
+  }
+  $('autoStatus').textContent = 'Active: ' + s.name + ' session.';
+  if(dxyBias === 'NEUTRAL'){
+    $('autoSuggestion').textContent = 'DXY is NEUTRAL. Waiting for a clear bias.';
+    return;
+  }
+  const act = dxyBias === 'BULLISH' ? 'SELL' : 'BUY';
+  $('autoSuggestion').innerHTML = `Suggested bias: <b class="${act === 'BUY' ? 'buy' : 'sell'}">${act} XAUUSD</b> (DXY ${dxyBias}). Confirm on your chart before trading.`;
+  const key = act + new Date().toISOString().slice(0, 13);
+  if(key !== lastAutoKey){
+    lastAutoKey = key;
+    alertUser('Auto Analyst – XAUUSD', `${s.name} session: DXY ${dxyBias} → ${act} bias`);
+  }
+}
+
+/* ================= MT5 SCREENSHOT ================= */
+$('shotInput').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  pendingShot = {url: URL.createObjectURL(f)};
+  $('shotPreview').src = pendingShot.url;
+  $('shotPreview').style.display = 'block';
+});
+
+function askSignal(){
+  if(!pendingShot){ toast('Upload an MT5 screenshot first.'); return; }
+  requests.unshift({url: pendingShot.url, note: $('shotNote').value, time: new Date().toLocaleString()});
+  renderRequests();
+  toast('Signal request saved on this page.');
+}
+
+/* ================= TICK LOOP ================= */
+function tick(){
+  const now = Date.now();
+  const s = inSession();
+  $('clock').textContent = 'UTC ' + new Date().toISOString().slice(11, 19) + ' | ' + (s ? s.name + ' session open' : 'Off-session');
+  $('statSession').textContent = s ? s.name : 'Off-session';
+
+  
+news.forEach(n => {
+    const left = new Date(n.time).getTime() - now;
+
+    if (
+        left > 0 &&
+        left <= CONFIG.preNewsSeconds * 1000 &&
+        !firedNews.has(n.id)
+    ) {
+        firedNews.add(n.id);
+
+        const a = newsAction(n.expected);
+
+        alertUser(
+            `⚠️ USA News in 1 minute: ${n.name}`,
+            `DXY ${a.dxy} → ${a.action} XAUUSD NOW`
+        );
+    }
+});
+
+const upcoming = news
+    .map(n => new Date(n.time).getTime())
+    .filter(t => t > now)
+    .sort((a, b) => a - b)[0];
+
+$('statNews').textContent = upcoming
+    ? fmtCountdown(upcoming - now)
+    : 'None scheduled';
+
+renderNews();
+}
+
+/* ================= INIT ================= */
+
+renderBanner();
+renderNews();
+
+$('dxySelect').value = dxyBias;
+$('statDxy').textContent = dxyBias;
+
+makeChart(
+    'tv_home',
+    'OANDA:XAUUSD',
+    '15'
+);
+
+setInterval(tick, 1000);
+setInterval(autoAnalyst, 60000);
+
+tick();
+
+</script>
+</body>
+</html>
